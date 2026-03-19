@@ -103,7 +103,7 @@ Raw manifests in `k8s/`. Backend runs 2 replicas (stateless). Redis is a single 
 |---|---|
 | Run backend tests | `cd backend && go test -race ./...` |
 | Build backend | `cd backend && go build ./cmd/server` |
-| Build frontend | `cd frontend && npm run build` |
+| Build frontend | `cd frontend && bun run build` |
 | Generate protobuf | `buf generate` (requires `buf` CLI) |
 | Lint proto | `buf lint` |
 | Start dev env | `docker compose -f docker-compose.dev.yml up -d` |

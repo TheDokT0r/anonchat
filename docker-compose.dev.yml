@@ -24,9 +24,9 @@ services:
       - redis
 
   frontend:
-    image: node:20-alpine
+    image: oven/bun:1-alpine
     working_dir: /app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "bun install && bun run dev"
     volumes:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
