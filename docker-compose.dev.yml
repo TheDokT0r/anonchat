@@ -1,0 +1,43 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6379:6379"
+
+  backend:
+    image: golang:1.24-alpine
+    working_dir: /app
+    command: sh -c "go install github.com/githubnemo/CompileDaemon@latest && CompileDaemon -build='go build -o ./tmp/server ./cmd/server' -command='./tmp/server' -directory=. -exclude-dir=tmp -pattern='(.+\\.go)$$'"
+    volumes:
+      - ./backend:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_ADDR=redis:6379
+      - PORT=8080
+      - ALLOWED_ORIGINS=*
+      - GOTOOLCHAIN=local
+    depends_on:
+      - redis
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
+  frontend-node-modules:

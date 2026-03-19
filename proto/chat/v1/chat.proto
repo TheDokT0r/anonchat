@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package chat.v1;
+
+option go_package = "anonchat/backend/gen/chat/v1;chatv1";
+
+message JoinRoom {
+  string room_name = 1;
+}
+
+message LeaveRoom {}
+
+message ChatMessage {
+  string sender_name = 1;
+  string content = 2;
+  int64 timestamp = 3;
+}
+
+message PresenceUpdate {
+  repeated string users = 1;
+}
+
+message TypingIndicator {
+  string user_name = 1;
+  bool is_typing = 2;
+}
+
+message ClientMessage {
+  oneof payload {
+    JoinRoom join = 1;
+    LeaveRoom leave = 2;
+    ChatMessage chat = 3;
+    TypingIndicator typing = 4;
+  }
+}
+
+message ServerMessage {
+  oneof payload {
+    ChatMessage chat = 1;
+    PresenceUpdate presence = 2;
+    TypingIndicator typing = 3;
+    RoomJoined room_joined = 4;
+    Error error = 5;
+  }
+}
+
+message RoomJoined {
+  string room_name = 1;
+  string assigned_name = 2;
+  repeated string users = 3;
+}
+
+message Error {
+  string message = 1;
+}

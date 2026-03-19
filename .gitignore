@@ -1,0 +1,12 @@
+.superpowers/
+bin/
+tmp/
+
+# Backend
+backend/server
+backend/tmp/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.svelte-kit/

@@ -1,0 +1,5 @@
+tmp/
+server
+*.test
+.air.toml
+.gitignore
