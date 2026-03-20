@@ -17,6 +17,7 @@ Rooms are ephemeral — created on first join, deleted when empty. No database, 
 | `proto/` | Protobuf message definitions (shared contract) | Protobuf |
 | `backend/` | WebSocket server, room management, rate limiting | Go |
 | `frontend/` | SPA chat UI | SvelteKit 5 (TypeScript) |
+| `tui/` | Terminal UI chat client | Go (Bubbletea) |
 | `k8s/` | Kubernetes deployment manifests | YAML |
 
 ## Backend (`backend/`)
@@ -97,14 +98,39 @@ docker compose up --build -d
 
 Raw manifests in `k8s/`. Backend runs 2 replicas (stateless). Redis is a single StatefulSet with no persistence. Nginx ingress routes `/ws` to backend, everything else to frontend.
 
+## TUI Client (`tui/`)
+
+Go module: `anonchat/tui`. Bubbletea-based terminal chat client.
+
+### Structure
+
+- `main.go` — Entry point. `--room` and `--server` flags, interactive prompt if no room given.
+- `internal/ws/messages.go` — JSON message types matching the WebSocket protocol.
+- `internal/ws/client.go` — WebSocket client with connect, send, listen.
+- `internal/ui/app.go` — Root Bubbletea model. Two states: room prompt and chat view. Routes WebSocket messages via Bubbletea command system.
+- `internal/ui/chat.go` — Message list with colored names and italic system messages. Capped at 200 messages.
+- `internal/ui/input.go` — Text input with typing indicator debounce (2s).
+- `internal/ui/users.go` — User list sidebar with colored names.
+- `internal/ui/colors.go` — Same hash-to-color algorithm as the web frontend.
+
+### Key Patterns
+
+- **Optimistic send** — own messages added to view immediately (server suppresses echo).
+- **Presence diffing** — compares previous/new user lists to generate join/leave system messages.
+- **Typing auto-clear** — 3s timeout on received typing indicators.
+- **Bubbletea commands** — WebSocket messages flow through `listenForMessages` → `ServerMsg` → `handleServerMessage`.
+
 ## Common Tasks
 
 | Task | Command |
 |---|---|
 | Run backend tests | `cd backend && go test -race ./...` |
+| Run TUI tests | `cd tui && go test -race ./...` |
 | Build backend | `cd backend && go build ./cmd/server` |
+| Build TUI | `cd tui && go build -o bin/anonchat-tui .` |
 | Build frontend | `cd frontend && bun run build` |
 | Generate protobuf | `buf generate` (requires `buf` CLI) |
 | Lint proto | `buf lint` |
 | Start dev env | `docker compose -f docker-compose.dev.yml up -d` |
 | Start prod env | `docker compose up --build -d` |
+| Run TUI | `cd tui && go run . --room test` |
