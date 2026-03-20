@@ -192,15 +192,6 @@ func (m AppModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		if msg.Type == tea.KeyRunes && !m.typingSent {
-			m.typingSent = true
-			m.lastTypingSent = time.Now()
-			m.client.Send(ws.ClientMessage{Typing: &ws.TypingSendMsg{IsTyping: true}})
-			return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
-				return stopTypingTick{}
-			})
-		}
-
 	case stopTypingTick:
 		if m.typingSent && time.Since(m.lastTypingSent) >= 2*time.Second {
 			m.typingSent = false
@@ -209,8 +200,20 @@ func (m AppModel) updateChat(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Always pass through to text input first
 	var cmd tea.Cmd
 	m.inputModel, cmd = m.inputModel.Update(msg)
+
+	// Then handle typing indicator (after input has the keypress)
+	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.Type == tea.KeyRunes && !m.typingSent {
+		m.typingSent = true
+		m.lastTypingSent = time.Now()
+		m.client.Send(ws.ClientMessage{Typing: &ws.TypingSendMsg{IsTyping: true}})
+		return m, tea.Batch(cmd, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+			return stopTypingTick{}
+		}))
+	}
+
 	return m, cmd
 }
 
